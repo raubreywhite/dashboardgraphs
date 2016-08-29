@@ -69,14 +69,19 @@ theme(
     plot.margin = unit(c(0.5, 0.5, 0.5, 0.5), "lines"), complete = TRUE)
 }
 
-MakeLineThresholdPlot <- function(pd,x,dataVal,dataCIL=NULL,dataCIU=NULL,L1,L2,L3,L4,allPoints=TRUE,title=NULL,pointShift=0, xShift=0, weekNumbers=FALSE, GetCols){
+MakeLineThresholdPlot <- function(pd,x,dataVal,dataCIL=NULL,dataCIU=NULL,L1,L2,L3,L4,allPoints=TRUE,title=NULL,pointShift=0, xShift=0, weekNumbers=FALSE, step=FALSE, GetCols){
   pd <- as.data.frame(pd)
   pd$printYear <- format.Date(pd[[x]],"%G")
   pd$printWeek <- format.Date(pd[[x]],"%V")
   pd$printMonth <- format.Date(pd[[x]],"%m")
   pd$printDay <- format.Date(pd[[x]],"%d")
-  pd$xShifted <- pd[[x]] + pointShift
-  pd[[x]] <- pd[[x]] + xShift
+  if(step){
+    pd$xShifted <- pd[[x]] + pointShift
+    pd[[x]] <- pd[[x]] + xShift
+  } else {
+  pd$xShifted <- pd[[x]]
+    pd[[x]] <- pd[[x]]
+  }
   includeMedium <- nrow(pd[pd$status=="Medium",])>0
   includeHigh <- nrow(pd[pd$status=="High",])>0
   
@@ -103,15 +108,19 @@ MakeLineThresholdPlot <- function(pd,x,dataVal,dataCIL=NULL,dataCIU=NULL,L1,L2,L
   }
   
   q <- ggplot(pd,aes_string(x=x))
-  #q <- q + geom_ribbon(aes_string(ymin = L3, ymax = L4, fill = shQuote("L1")), alpha = 0.4)
-  #q <- q + geom_ribbon(aes_string(ymin = L2, ymax = L3, fill = shQuote("L2")), alpha = 0.4)
-  #q <- q + geom_ribbon(aes_string(ymin = L1, ymax = L2, fill = shQuote("L3")), alpha = 0.4)
-  q <- q + stat_stepribbon(aes_string(ymin = L3, ymax = L4, fill = shQuote("L1")), direction="vh", alpha = 0.4)
-  q <- q + stat_stepribbon(aes_string(ymin = L2, ymax = L3, fill = shQuote("L2")), direction="vh", alpha = 0.4)
-  q <- q + stat_stepribbon(aes_string(ymin = L1, ymax = L2, fill = shQuote("L3")), direction="vh", alpha = 0.4)
-  if(!is.null(dataCIL) & !is.null(dataCIU)) q <- q + geom_ribbon(aes_string(ymin = dataCIL, ymax = dataCIU), fill= "black", alpha = 0.4)
-  q <- q + geom_step(aes_string(y = dataVal), direction="vh", lwd = 1)
-  
+  if(step){
+    q <- q + stat_stepribbon(aes_string(ymin = L3, ymax = L4, fill = shQuote("L1")), direction="vh", alpha = 0.4)
+    q <- q + stat_stepribbon(aes_string(ymin = L2, ymax = L3, fill = shQuote("L2")), direction="vh", alpha = 0.4)
+    q <- q + stat_stepribbon(aes_string(ymin = L1, ymax = L2, fill = shQuote("L3")), direction="vh", alpha = 0.4)
+    if(!is.null(dataCIL) & !is.null(dataCIU)) q <- q + stat_stepribbon(aes_string(ymin = dataCIL, ymax = dataCIU), fill= "black", direction="vh", alpha = 0.4)
+    q <- q + geom_step(aes_string(y = dataVal), direction="vh", lwd = 1)
+  } else {
+    q <- q + geom_ribbon(aes_string(ymin = L3, ymax = L4, fill = shQuote("L1")), alpha = 0.4)
+    q <- q + geom_ribbon(aes_string(ymin = L2, ymax = L3, fill = shQuote("L2")), alpha = 0.4)
+    q <- q + geom_ribbon(aes_string(ymin = L1, ymax = L2, fill = shQuote("L3")), alpha = 0.4)
+    if(!is.null(dataCIL) & !is.null(dataCIU)) q <- q + geom_ribbon(aes_string(ymin = dataCIL, ymax = dataCIU), fill= "black", alpha = 0.4)
+    q <- q + geom_point(aes_string(y = dataVal), lwd = 1)
+  }
   
   if(allPoints){
     q <- q + geom_point(aes_string(x="xShifted", y = dataVal), size = 4, fill = "black")
@@ -131,8 +140,6 @@ MakeLineThresholdPlot <- function(pd,x,dataVal,dataCIL=NULL,dataCIU=NULL,L1,L2,L
     breaksDF$printLabel <- paste0(breaksDF$printDay,"/",breaksDF$printMonth)
   }
   if(as.numeric(difftime(limits[2],limits[1],"days"))/denom < 52*0.5){
-    #q <- q + geom_text_repel(aes_string(x="xShifted",y=dataVal,label="printWeek"),data=pd[pd[[x]]!=min(pd[[x]]),],nudge_y = limitsY*0.025)
-    
     breaksDF <- breaksDF[seq(1,nrow(breaksDF),2),]
   } else if(as.numeric(difftime(limits[2],limits[1],"days"))/denom < 52*1){
     breaksDF <- breaksDF[seq(1,nrow(breaksDF),2),]
