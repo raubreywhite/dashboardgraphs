@@ -119,7 +119,7 @@ MakeLineThresholdPlot <- function(pd,x,dataVal,dataCIL=NULL,dataCIU=NULL,L1,L2,L
     q <- q + geom_ribbon(aes_string(ymin = L2, ymax = L3, fill = shQuote("L2")), alpha = 0.4)
     q <- q + geom_ribbon(aes_string(ymin = L1, ymax = L2, fill = shQuote("L3")), alpha = 0.4)
     if(!is.null(dataCIL) & !is.null(dataCIU)) q <- q + geom_ribbon(aes_string(ymin = dataCIL, ymax = dataCIU), fill= "black", alpha = 0.4)
-    q <- q + geom_point(aes_string(y = dataVal), lwd = 1)
+    q <- q + geom_line(aes_string(y = dataVal), lwd = 1)
   }
   
   if(allPoints){
