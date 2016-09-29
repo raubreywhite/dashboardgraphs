@@ -124,7 +124,8 @@ MakeLineThresholdPlot <- function(pd,x,dataVal,dataCIL=NULL,dataCIU=NULL,L1,L2,L
   breaksDF <- DateBreaks(breaksDF, limits, weekNumbers)
   
   #q <- q + scale_x_date("Dato", breaks = breaksDF$xShifted,  labels = breaksDF$printLabel)
-  q <- q + scale_x_date("Dato")
+  q <- q + scale_xcontinuous("Dato", breaks = breaksDF$xShifted,  labels = breaksDF$printLabel)
+  
   q <- q + scale_y_continuous("")
   q <- q + scale_fill_manual(values=GetCols(),labels=c(
     "Betydelig høyere enn forventet",
