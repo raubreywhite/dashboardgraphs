@@ -132,24 +132,7 @@ MakeLineThresholdPlot <- function(pd,x,dataVal,dataCIL=NULL,dataCIU=NULL,L1,L2,L
   q <- q + ThemeShiny()
   
   breaksDF <- pd[pd$printWeek!="",]
-  if(weekNumbers){
-    denom <- 7
-    breaksDF$printLabel <- paste0(breaksDF$printWeek,"/",breaksDF$printYear)
-  } else {
-    denom <- 1
-    breaksDF$printLabel <- paste0(breaksDF$printDay,"/",breaksDF$printMonth)
-  }
-  if(as.numeric(difftime(limits[2],limits[1],"days"))/denom < 52*0.5){
-    breaksDF <- breaksDF[seq(1,nrow(breaksDF),2),]
-  } else if(as.numeric(difftime(limits[2],limits[1],"days"))/denom < 52*1){
-    breaksDF <- breaksDF[seq(1,nrow(breaksDF),2),]
-  } else if(as.numeric(difftime(limits[2],limits[1],"days"))/denom < 52*2){
-    breaksDF <- breaksDF[seq(1,nrow(breaksDF),4),]
-  } else if(as.numeric(difftime(limits[2],limits[1],"days"))/denom < 52*4){
-    breaksDF <- breaksDF[seq(1,nrow(breaksDF),8),]
-  } else if(as.numeric(difftime(limits[2],limits[1],"days"))/denom < 52*10){
-    breaksDF <- breaksDF[seq(1,nrow(breaksDF),16),]
-  }
+  breaksDF <- DateBreaks(breaksDF, limits, weekNumbers)
   
   q <- q + scale_x_date("", breaks = breaksDF$xShifted,  labels = breaksDF$printLabel)
   q <- q + scale_y_continuous("")
@@ -166,6 +149,11 @@ MakeLineThresholdPlot <- function(pd,x,dataVal,dataCIL=NULL,dataCIU=NULL,L1,L2,L
 
 MakeLineBrushPlot <- function(pd,x,dataVal,L2,L3, GetCols){
   pd <- as.data.frame(pd)
+  pd$printYear <- format.Date(pd[[x]],"%G")
+  pd$printWeek <- format.Date(pd[[x]],"%V")
+  pd$printMonth <- format.Date(pd[[x]],"%m")
+  pd$printDay <- format.Date(pd[[x]],"%d")
+  
   includeHigh <- sum(pd$status=="High")>0
   includeMedium <- sum(pd$status=="Medium")>0
   includeNormal <- sum(pd$status=="Normal")>0
@@ -185,24 +173,16 @@ MakeLineBrushPlot <- function(pd,x,dataVal,L2,L3, GetCols){
   limitsY[2] <- limitsY[2] + limitsSize*0.05
   
   limits <- range(pd[[x]])
-  dateBreaks <- "6 months"
-  if(as.numeric(difftime(limits[2],limits[1],"days"))/7 < 52*0.25){
-    dateBreaks <- "2 weeks"
-  } else if(as.numeric(difftime(limits[2],limits[1],"days"))/7 < 52*0.5){
-    dateBreaks <- "2 weeks"
-  } else if(as.numeric(difftime(limits[2],limits[1],"days"))/7 < 52*1){
-    dateBreaks <- "1 month"
-  } else if(as.numeric(difftime(limits[2],limits[1],"days"))/7 < 52*2){
-    dateBreaks <- "2 months"
-  }
-  
+  breaksDF <- pd[pd$printWeek!="",]
+  breaksDF <- DateBreaks(breaksDF, limits, weekNumbers=TRUE)
+    
   q <- ggplot(pd,aes_string(x=x))
   q <- q + geom_line(aes_string(y = dataVal), lwd = 1)
   if(includeMedium | includeHigh) q <- q + geom_point(aes_string(y = dataVal), size = 4, fill = "black", data=pd[pd$status%in%c("Medium","High"),])
   if(includeMedium) q <- q + geom_point(aes_string(y = dataVal, colour=shQuote("L2")), size = 2, data=pd[pd$status=="Medium",])
   if(includeHigh) q <- q + geom_point(aes_string(y = dataVal, colour=shQuote("L1")), size = 2, data=pd[pd$status=="High",])
   q <- q + ThemeShiny()
-  q <- q + scale_x_date("", date_breaks = dateBreaks)
+  q <- q + scale_x_date("", breaks = breaksDF$x,  labels = breaksDF$printLabel)
   q <- q + scale_y_continuous("",breaks=NULL)
   if(!is.null(colours)) q <- q + scale_colour_manual(values=colours)
   q <- q + guides(colour=FALSE)
