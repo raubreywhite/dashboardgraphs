@@ -96,17 +96,6 @@ MakeLineThresholdPlot <- function(pd,x,dataVal,dataCIL=NULL,dataCIU=NULL,L1,L2,L
   
   limitsY <- diff(range(c(pd[[L1]],pd[[L4]])))
   
-  dateBreaks <- "6 months"
-  if(as.numeric(difftime(limits[2],limits[1],"days"))/7 < 52*0.25){
-    dateBreaks <- "2 weeks"
-  } else if(as.numeric(difftime(limits[2],limits[1],"days"))/7 < 52*0.5){
-    dateBreaks <- "2 weeks"
-  } else if(as.numeric(difftime(limits[2],limits[1],"days"))/7 < 52*1){
-    dateBreaks <- "1 month"
-  } else if(as.numeric(difftime(limits[2],limits[1],"days"))/7 < 52*2){
-    dateBreaks <- "2 months"
-  }
-  
   q <- ggplot(pd,aes_string(x=x))
   if(step){
     q <- q + stat_stepribbon(aes_string(ymin = L3, ymax = L4, fill = shQuote("L1")), direction="vh", alpha = 0.4)
@@ -131,10 +120,10 @@ MakeLineThresholdPlot <- function(pd,x,dataVal,dataCIL=NULL,dataCIU=NULL,L1,L2,L
   if(includeHigh) q <- q + geom_point(aes_string(x="xShifted", y = dataVal, colour=shQuote("L1")), size = 2, data=pd[pd$status=="High",])
   q <- q + ThemeShiny()
   
-  breaksDF <- pd[pd$printWeek!="",]
+  #breaksDF <- pd[pd$printWeek!="",]
   breaksDF <- DateBreaks(breaksDF, limits, weekNumbers)
   
-  q <- q + scale_x_date("", breaks = breaksDF$xShifted,  labels = breaksDF$printLabel)
+  q <- q + scale_x_date("Dato", breaks = breaksDF$xShifted,  labels = breaksDF$printLabel)
   q <- q + scale_y_continuous("")
   q <- q + scale_fill_manual(values=GetCols(),labels=c(
     "Betydelig høyere enn forventet",
@@ -173,7 +162,7 @@ MakeLineBrushPlot <- function(pd,x,dataVal,L2,L3, GetCols){
   limitsY[2] <- limitsY[2] + limitsSize*0.05
   
   limits <- range(pd[[x]])
-  breaksDF <- pd[pd$printWeek!="",]
+  #breaksDF <- pd[pd$printWeek!="",]
   breaksDF <- DateBreaks(breaksDF, limits, weekNumbers=TRUE)
     
   q <- ggplot(pd,aes_string(x=x))
@@ -182,7 +171,7 @@ MakeLineBrushPlot <- function(pd,x,dataVal,L2,L3, GetCols){
   if(includeMedium) q <- q + geom_point(aes_string(y = dataVal, colour=shQuote("L2")), size = 2, data=pd[pd$status=="Medium",])
   if(includeHigh) q <- q + geom_point(aes_string(y = dataVal, colour=shQuote("L1")), size = 2, data=pd[pd$status=="High",])
   q <- q + ThemeShiny()
-  q <- q + scale_x_date("", breaks = breaksDF$x,  labels = breaksDF$printLabel)
+  q <- q + scale_x_date("Date", breaks = breaksDF[[x]],  labels = breaksDF$printLabel)
   q <- q + scale_y_continuous("",breaks=NULL)
   if(!is.null(colours)) q <- q + scale_colour_manual(values=colours)
   q <- q + guides(colour=FALSE)
